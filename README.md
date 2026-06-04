@@ -53,6 +53,7 @@ graph TB
             ch10["Ch 10: Loops ✅"]
             ch11["Ch 11: Arrays ✅"]
             ch12_fn["Ch 12: Functions ✅"]
+            ch13_str["Ch 13: Strings ✅"]
         end
 
         subgraph adv["⚙️ Advanced JS (Weeks 7–8)"]
@@ -244,6 +245,15 @@ LearnPlaywrightBatch2x/
 │   ├── 115_API_REAL_Closure.js         # Real-world closure — retry tracker per test
 │   ├── 116_Higher_Order_Fn.js          # Higher-Order Function — takes/returns a function
 │   └── 117_Pure_Fn.js                  # Pure functions — same input → same output, no side effects
+│
+├── chapter_13_Strings/                 ✅ Strings — quotes, template literals, properties, search, slice, transform, conversion
+│   ├── 118_Strings.js                  # Single/double quotes, template literals, multiline, String()
+│   ├── 119_String_Properties.js        # length, index access, .at() negative, charAt, charCodeAt
+│   ├── 120_Search_Check_Str.js         # includes, startsWith/endsWith, indexOf/lastIndexOf, search(regex)
+│   ├── 121_Substring.js                # slice vs substring — negative index, the swap trap
+│   ├── 122_Transform_Str.js            # case, trim, replace/replaceAll, concat, split/join
+│   ├── 123_SC.js                       # String conversion — toString, Number, parseInt, parseFloat
+│   └── javascript_stringcheatsheet.md  # 📋 Full string-method cheat sheet (40+ methods, tables)
 │
 └── README.md                           👋 You are here
 ```
@@ -2929,12 +2939,133 @@ isPassing(70);              // false ← same input, different answer
 
 ---
 
+## 📖 What's in Chapter 13 — Strings (Available Now)
+
+### Files
+
+| File | Topic | What you'll learn |
+|------|-------|-------------------|
+| `118_Strings.js` | Creating strings | Single vs double quotes, template literals `` `${x}` ``, multiline backticks, `String()` conversion |
+| `119_String_Properties.js` | Properties & indexing | `length`, `str[i]`, `.at(-1)` for last char, `charAt`, `charCodeAt` |
+| `120_Search_Check_Str.js` | Search & check | `includes`, `startsWith`/`endsWith`, `indexOf`/`lastIndexOf`, `search(/regex/)` |
+| `121_Substring.js` | Extract | `slice` (negative index OK) vs `substring` (no negatives, swaps args) |
+| `122_Transform_Str.js` | Transform | `toUpperCase`/`toLowerCase`, `trim`, `replace`/`replaceAll`, `concat`, `split`/`join` |
+| `123_SC.js` | String conversion | `toString`, `Number()`, `parseInt("42px")`, `parseFloat("3.14rem")` |
+| `javascript_stringcheatsheet.md` | 📋 Cheat sheet | All 40+ string methods grouped in tables with one-liner examples + gotchas |
+
+### Concept
+
+A **string** is an ordered, **immutable** sequence of characters — every "modifying" method returns a *new* string and leaves the original untouched. Strings are the bread-and-butter of test automation: URLs, locators, assertion text, API payloads.
+
+### Why
+
+Tests live and die on string handling — extracting a test ID from `"Login_Test_Pass_001"`, asserting a URL `includes("/login")`, normalizing case before comparison, splitting CSV results. Knowing the right method (and its trap) keeps assertions correct and flake-free.
+
+**Q&A — why use this?**
+- **Q: `slice` or `substring`?** A: `slice` — it supports negative indexes (`-3` = last 3 chars) and never silently swaps arguments. `substring` swaps when `start > end`, which hides bugs.
+- **Q: `search` or `indexOf`?** A: `indexOf` for a literal substring (faster, exact). `search` when you need a **regex** or case-insensitive `/x/i` matching.
+- **Q: Why does my replace only change the first match?** A: `replace("a","b")` replaces only the first. Use `replaceAll` or a global regex `/a/g` for every occurrence.
+
+### Key Concepts
+
+```mermaid
+mindmap
+  root((Chapter 13 — Strings))
+    Create
+      single 'quotes'
+      double "quotes"
+      template `${x}`
+      multiline backticks
+    Properties
+      length
+      index str&#91;0&#93;
+      at&#40;-1&#41; last char
+      charAt / charCodeAt
+    Search
+      includes
+      startsWith / endsWith
+      indexOf / lastIndexOf
+      search regex
+    Extract
+      slice negatives OK
+      substring swaps args
+      split into array
+    Transform
+      toUpperCase / toLowerCase
+      trim / trimStart / trimEnd
+      replace vs replaceAll
+      concat / join
+    Convert
+      toString
+      Number&#40;&#41;
+      parseInt / parseFloat
+    Immutable
+      methods return new string
+      original never changes
+```
+
+### Run them
+
+```bash
+node chapter_13_Strings/118_Strings.js              # → template literal + String() output
+node chapter_13_Strings/119_String_Properties.js    # → length 13, index/at/charAt/charCodeAt
+node chapter_13_Strings/120_Search_Check_Str.js      # → includes/indexOf/search results
+node chapter_13_Strings/121_Substring.js             # → "Login", "001" (negative slice), substring
+node chapter_13_Strings/122_Transform_Str.js         # → case, trim, replace, split/join
+node chapter_13_Strings/123_SC.js                    # → string ↔ number conversions
+```
+
+---
+
+### 121 — slice vs substring (the trap)
+
+**Concept:** Both `slice(start, end)` and `substring(start, end)` extract a portion of a string, but they behave differently with negative and out-of-order arguments.
+
+**Why:** Picking the wrong one introduces silent bugs — `substring` rewrites your arguments behind your back, so a "wrong" range still returns *something* instead of failing loudly.
+
+**Q&A — why use this?**
+- **Q: How do I grab the last N characters?** A: `str.slice(-3)` — negative indexes count from the end. `substring(-3)` treats `-3` as `0` and returns the whole string.
+- **Q: What if `start > end`?** A: `slice` returns `""` (empty); `substring` **swaps** them and returns a non-empty result — a classic source of confusion.
+- **Q: Which should I default to?** A: `slice`. Same mental model as `Array.prototype.slice`, predictable with negatives, no silent swaps.
+
+```mermaid
+flowchart TD
+    Q{Need substring} --> A[slice start,end]
+    Q --> B[substring start,end]
+    A --> A1["negative index? counts from end"]
+    A --> A2["start gt end? returns empty string"]
+    B --> B1["negative index? treated as 0"]
+    B --> B2["start gt end? swaps args silently"]
+    A1 --> Win[Prefer slice]
+    A2 --> Win
+```
+
+```js
+let str = "Login_Test_Pass_001";
+
+str.slice(0, 5);     // "Login"
+str.slice(11);       // "Pass_001"  — end omitted → to the end
+str.slice(-3);       // "001"       — last 3 chars
+
+str.substring(6, 10);// "Test"
+str.substring(10, 6);// "Test"      — swapped! same as (6,10)
+str.slice(10, 6);    // ""          — slice returns empty
+```
+
+| Behavior | `slice` | `substring` |
+|----------|---------|-------------|
+| Negative index | counts from end | treated as `0` |
+| `start > end` | returns `""` | swaps args silently |
+| Recommended | ✅ default | ⚠️ avoid |
+
+---
+
 ## 🔭 What's Coming Next
 
 ```mermaid
 graph TD
-    subgraph next["Next Up — Strings, Objects, 2D Arrays"]
-        N1[Ch 12: Functions ✅] --> N2[Ch 13: Strings]
+    subgraph next["Next Up — Objects, 2D Arrays"]
+        N1[Ch 12: Functions ✅] --> N2[Ch 13: Strings ✅]
         N2 --> N3[Ch 14: Objects]
         N3 --> N4[Ch 15: 2D Arrays]
     end
@@ -2955,6 +3086,7 @@ graph TD
 - ✅ Chapter 11 — **Arrays (Part 2)**: sort (lexicographic trap), slice vs splice, concat/spread/join, `isArray`/`every`/`some` (files `92`–`95`)
 - ✅ Chapter 12 — **Functions (Part 1)**: define + call, four function types, parameter vs argument, template-literal returns, function expression, arrow functions (files `96`–`103`)
 - ✅ Chapter 12 — **Functions (Part 2)**: all-three forms side-by-side, IIFE, default/rest/spread params, scope, closures, higher-order functions, pure functions (files `104`–`117`)
+- ✅ Chapter 13 — **Strings**: quotes/template literals, properties & indexing, search/check, slice vs substring, transform (case/trim/replace/split), conversion + a full method cheat sheet (files `118`–`123`)
 - ✅ **Per-chapter README** — every chapter folder now has its own deep-dive README.md
 
 ---
