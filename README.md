@@ -54,6 +54,8 @@ graph TB
             ch11["Ch 11: Arrays ✅"]
             ch12_fn["Ch 12: Functions ✅"]
             ch13_str["Ch 13: Strings ✅"]
+            ch14_obj["Ch 14: Objects ✅"]
+            ch15_2d["Ch 15: 2D Arrays ✅"]
         end
 
         subgraph adv["⚙️ Advanced JS (Weeks 7–8)"]
@@ -254,6 +256,30 @@ LearnPlaywrightBatch2x/
 │   ├── 122_Transform_Str.js            # case, trim, replace/replaceAll, concat, split/join
 │   ├── 123_SC.js                       # String conversion — toString, Number, parseInt, parseFloat
 │   └── javascript_stringcheatsheet.md  # 📋 Full string-method cheat sheet (40+ methods, tables)
+│
+├── chapter_14_Objects/                 ✅ Objects — literals, access, ref vs primitive, destructuring, spread, get/set, this
+│   ├── 124_Objects.js                  # Object literal, keys/values, JSON vs JS object
+│   ├── 125_Objects2.js                 # key:value pairs, copy by reference, === on objects
+│   ├── 126_Objects_Creation.js         # Two identical literals are NOT === (different references)
+│   ├── 127_Objects_REAL.js             # Build config object dynamically, dot access, delete
+│   ├── 128_Primitive_Ref.js            # 🔥 Primitive (copy by value) vs Reference (copy by ref)
+│   ├── 129_Ob_Examples.js              # JSON-style "quoted keys" vs JS unquoted keys
+│   ├── 130_IQ.js                       # Dynamic property access obj[key], getOwnPropertyDescriptor
+│   ├── 131_Object_Fn.js                # Methods on objects — add(n), subtract(n)
+│   ├── 132_Obj_Decon.js                # Destructuring — rename, defaults, nested
+│   ├── 133_Spead.js                    # Spread {...obj} copy, const blocks reassignment
+│   ├── 134_Objects_GET_SET_Methods.js  # get/set accessors + `this`
+│   ├── 135_IQ                          # Object.keys/values/entries + for...in
+│   ├── 136_Obj_REAL.js                 # Real test config — ENV, expected response, nested objects
+│   └── 137_Let_const_obj.js            # let vs const for objects — mutate yes, reassign no
+│
+├── chapter_15_2D_Array/                ✅ 2D Arrays — grids, nested loops, real test matrices, patterns
+│   ├── 138_2D_Array.js                 # Grid literal, nested for loop, grid[i][j] access
+│   ├── 139_2d.js                       # Rows × cols, grid.length vs grid[0].length
+│   ├── 140_REAL.js                     # Test matrix — for, for-of, forEach printing (write vs log)
+│   ├── 141_2d_Array_Fn.js              # map + reduce row sums, find failed test cases
+│   ├── 142_IQ_Right_Pattern_Py.js      # IQ — right-triangle star pattern with nested loops
+│   └── testdata.csv                    # Sample CSV — username, password, expected_Result
 │
 └── README.md                           👋 You are here
 ```
@@ -3060,14 +3086,595 @@ str.slice(10, 6);    // ""          — slice returns empty
 
 ---
 
+## 📖 What's in Chapter 14 — Objects (Available Now)
+
+### Files
+
+| File | Topic | What you'll learn |
+|------|-------|-------------------|
+| `124_Objects.js` | Object literals | `{ key: value }`, dot access, JSON vs JS object shape |
+| `125_Objects2.js` | Keys & reference copy | Unquoted keys, `let b = a` copies the reference, `b === a` is `true` |
+| `126_Objects_Creation.js` | Identity | Two identical literals are **not** `===` — different memory references |
+| `127_Objects_REAL.js` | Build & delete | Add props dynamically (`config.browser = …`), `delete`, guard with dot access |
+| `128_Primitive_Ref.js` | 🔥 Value vs Reference | Primitives copy by **value**, objects/arrays/functions copy by **reference** |
+| `129_Ob_Examples.js` | JSON vs JS | `"quoted"` keys (JSON) vs unquoted keys (JS object literal) |
+| `130_IQ.js` | Dynamic access | `obj[key]` with a variable, `Object.getOwnPropertyDescriptor` flags |
+| `131_Object_Fn.js` | Methods | Functions as object members — `calculator.add(n)` |
+| `132_Obj_Decon.js` | Destructuring | Pull props into variables, rename, default values, nested destructuring |
+| `133_Spead.js` | Spread / copy | `{ ...obj }` shallow copy, merge, `const` blocks reassignment |
+| `134_Objects_GET_SET_Methods.js` | Getters / setters | `get`/`set` accessors and the `this` keyword |
+| `135_IQ` | Iterate | `Object.keys` / `values` / `entries`, `for...in` |
+| `136_Obj_REAL.js` | Real config | Test `ENV`, expected API response, nested config objects |
+| `137_Let_const_obj.js` | `let` vs `const` | Mutate properties freely; `const` blocks only reassignment of the binding |
+
+### Concept
+
+An **object** is an unordered collection of `key: value` pairs — the core data structure for grouping related data (a user, a config, an API response). Unlike primitives, objects are held by **reference**: a variable stores a pointer to the object in memory, not the object itself.
+
+### Why
+
+Everything in test automation is an object — Playwright `config`, fixtures, API request/response bodies, test data. Understanding reference semantics (why `b = a` then `b.x = 1` also changes `a.x`) prevents a whole category of "my test data mutated itself" bugs.
+
+**Q&A — why use this?**
+- **Q: Why does changing `b` also change `a` after `let b = a`?** A: Objects copy by **reference** — `a` and `b` point to the **same** object. Mutating through either name mutates the one shared object. Use `{ ...a }` for an independent copy.
+- **Q: Why are two `{ status: "pass" }` literals not `===`?** A: Each literal creates a **new** object at a new memory address. `===` compares references, not contents — different addresses → `false`. Compare contents with `JSON.stringify` or a deep-equal helper.
+- **Q: Dot `obj.name` or bracket `obj["name"]`?** A: Dot for known, fixed keys. Bracket when the key is **dynamic** (in a variable) or not a valid identifier (`obj["first name"]`).
+
+### Key Concepts
+
+```mermaid
+mindmap
+  root((Chapter 14 — Objects))
+    Create
+      literal {key: value}
+      empty {}
+      JSON quoted keys
+      JS unquoted keys
+    Access
+      dot obj.name
+      bracket obj&#91;key&#93;
+      dynamic key var
+    Mutate
+      add obj.x = 1
+      update obj.x = 2
+      delete obj.x
+    Reference
+      copy by reference
+      b = a shares object
+      === compares references
+      spread {...obj} copies
+    Destructure
+      pull props
+      rename
+      defaults
+      nested
+    Methods
+      fn members
+      get / set
+      this keyword
+    Iterate
+      Object.keys
+      Object.values
+      Object.entries
+      for...in
+    Binding
+      const blocks reassign
+      properties stay mutable
+```
+
+### Run them
+
+```bash
+node chapter_14_Objects/124_Objects.js                  # → object literals + JSON shape
+node chapter_14_Objects/125_Objects2.js                 # → reference copy, b === a → true
+node chapter_14_Objects/128_Primitive_Ref.js            # → value vs reference semantics
+node chapter_14_Objects/132_Obj_Decon.js                # → destructuring, rename, defaults, nested
+node chapter_14_Objects/133_Spead.js                    # → spread copy + const reassignment block
+node chapter_14_Objects/134_Objects_GET_SET_Methods.js  # → getter/setter + this
+node chapter_14_Objects/137_Let_const_obj.js            # → mutate ok, reassign blocked by const
+```
+
+---
+
+### 124 — Object Basics (literals, access, JSON vs JS)
+
+**Concept:** An object literal `{ key: value }` groups related data. Read it with dot (`obj.name`) or bracket (`obj["name"]`) notation. JS keys are unquoted; the quoted-key form (`{ "name": … }`) is JSON.
+
+**Why:** Objects model real entities — a user, a test config, a request payload. They are the most common shape you pass around in Playwright and API tests.
+
+**Q&A — why use this?**
+- **Q: When are keys quoted?** A: Only in JSON, or when a key isn't a valid identifier (`"first name"`, `"data-id"`). Plain JS object keys are unquoted.
+- **Q: How do I add a property after creation?** A: Assign to a new key — `config.browser = "chrome"`. The object grows. `delete config.browser` removes it.
+- **Q: What does `obj.missing` return?** A: `undefined` — not an error. Guard with `if (obj.x)` or `obj.x ?? fallback` before using it.
+
+```mermaid
+flowchart LR
+    O["obj = { name, age }"] --> D["obj.name (dot)"]
+    O --> B["obj&#91;'age'&#93; (bracket)"]
+    O --> A["obj.city = 'NYC' (add)"]
+    O --> X["delete obj.age (remove)"]
+    style O fill:#e3f2fd,stroke:#01579b
+```
+
+```js
+// 124 + 127 + 130 — combined
+let config = {};
+config.browser = "chrome";      // add property
+config.timeout = 3000;
+console.log(config);            // { browser: 'chrome', timeout: 3000 }
+
+delete config.browser;          // remove property
+console.log(config);            // { timeout: 3000 }
+
+const user = { name: "John", age: 30 };
+const key = "age";
+console.log(user.name);         // "John"   — dot
+console.log(user[key]);         // 30       — dynamic bracket access
+```
+
+---
+
+### 128 — Primitive vs Reference (the #1 gotcha)
+
+**Concept:** Primitives (`number`, `string`, `boolean`, …) are copied **by value** — the copy is independent. Objects, arrays, and functions are copied **by reference** — the copy points at the *same* underlying object.
+
+**Why:** This single rule explains the most common "why did my data change?" bug in test code. Pass an object to a helper, mutate it there, and the caller's object changes too — because there was only ever one object.
+
+**Q&A — why use this?**
+- **Q: After `let b = a` (objects), are they linked?** A: Yes — both names point to one object. `b.val = 99` makes `a.val` 99 too. There is no copy.
+- **Q: How do I make a real, independent copy?** A: Shallow: `{ ...a }` or `Object.assign({}, a)`. Deep (nested objects): `structuredClone(a)` or `JSON.parse(JSON.stringify(a))`.
+- **Q: Does this apply to function arguments?** A: Yes. Passing an object to a function passes the reference — mutations inside the function are visible outside. Primitives passed in are safe copies.
+
+```mermaid
+flowchart TB
+    subgraph prim["Primitive — copy by VALUE"]
+        PA["a = 10"] --> PB["b = a → 10"]
+        PB --> PC["b = 99"]
+        PC --> PR["a still 10 ✅"]
+    end
+    subgraph ref["Reference — copy by REFERENCE"]
+        RA["obj1 = { val: 10 }"] --> RB["obj2 = obj1"]
+        RB --> RBOX[("one object<br/>{ val }")]
+        RA --> RBOX
+        RB --> RC["obj2.val = 99"]
+        RC --> RR["obj1.val is 99 ⚠️"]
+    end
+    style PR fill:#e8f5e9,stroke:#2e7d32
+    style RR fill:#ffebee,stroke:#c62828
+```
+
+```js
+// 128_Primitive_Ref.js
+let a = 10;
+let b = a;          // copy the VALUE
+b = 99;
+console.log(a);     // 10  ← a is untouched
+
+let obj1 = { val: 10 };
+let obj2 = obj1;    // copy the REFERENCE (same object)
+obj2.val = 99;
+console.log(obj1.val); // 99 ← both names point to one object
+
+// Independent copy:
+let obj3 = { ...obj1 };
+obj3.val = 1;
+console.log(obj1.val); // 99 ← obj3 is its own object
+```
+
+| | Primitive | Object / Array / Function |
+|:-|:-:|:-:|
+| Copied by | **value** | **reference** |
+| `b = a; b = x` affects `a`? | ❌ no | ⚠️ yes (when mutating, not reassigning) |
+| Independent copy | automatic | `{ ...a }`, `structuredClone(a)` |
+| `===` compares | value | reference (identity) |
+
+---
+
+### 132 — Destructuring (rename, defaults, nested)
+
+**Concept:** Destructuring pulls properties out of an object straight into variables — `const { name, age } = user`. You can rename (`name: userName`), supply defaults (`country = "USA"`), and reach into nested objects.
+
+**Why:** It keeps test code clean — grab exactly the fields you need from a fixture, config, or API response in one line instead of repeating `response.body.user.…` everywhere.
+
+**Q&A — why use this?**
+- **Q: How do I rename while destructuring?** A: `const { name: userName } = user` — `name` is the source key, `userName` is the new variable. The original key name does not become a variable.
+- **Q: What if the property is missing?** A: Provide a default — `const { country = "USA" } = user`. If `user.country` is `undefined`, `country` becomes `"USA"`.
+- **Q: Can I destructure nested objects?** A: Yes — `const { user: { address: { city } } } = data`. Only `city` becomes a variable; the intermediate names are just the path.
+
+```mermaid
+flowchart LR
+    U["user = { name1, age, city }"] --> R1["{ name1: userName } → rename"]
+    U --> R2["{ country = 'USA' } → default"]
+    D["data.user.address.city"] --> R3["{ user: { address: { city } } } → nested"]
+    style U fill:#e3f2fd,stroke:#01579b
+    style D fill:#f3e5f5,stroke:#7b1fa2
+```
+
+```js
+// 132_Obj_Decon.js
+const user = { name1: "John", age: 30, city: "NYC" };
+
+// Rename
+const { name1: userName, age: userAge } = user;
+console.log(userName, userAge);   // John 30
+
+// Default value (key absent → fallback)
+const { country = "USA" } = user;
+console.log(country);             // USA
+
+// Nested
+const data = {
+    user: { name: "John", address: { city: "NYC" } }
+};
+const { user: { address: { city } } } = data;
+console.log(city);                // NYC
+```
+
+---
+
+### 133 / 137 — Spread Copy & `let` vs `const` for Objects
+
+**Concept:** `{ ...obj }` spreads an object's own properties into a new object — a shallow copy or merge. Declaring the binding with `const` locks **which** object the variable points to; it does **not** freeze the contents — properties stay fully mutable.
+
+**Why:** Spread is the idiomatic way to copy/merge config without sharing a reference. `const` for objects is the team default: the reference rarely changes, so `const` signals stable intent and turns accidental reassignment into a loud error.
+
+**Q&A — why use this?**
+- **Q: Does `const` make an object immutable?** A: No. `const obj = {…}` blocks `obj = somethingElse` (reassignment) but allows `obj.x = 1`, `delete obj.y`. Use `Object.freeze(obj)` to lock contents.
+- **Q: When do I actually need `let` for an object?** A: Only when you reassign the **binding** to a different object (`config = { … }`). Rare — mutating or spreading into a new `const` is preferred.
+- **Q: Is `{ ...obj }` a deep copy?** A: No — **shallow**. Nested objects are still shared by reference. Deep copy needs `structuredClone(obj)`.
+
+```mermaid
+flowchart TD
+    C["const obj1 = { a: 1, b: 2 }"] --> M["obj1.a = 99 ✅ mutate contents"]
+    C --> ADD["obj1.c = 3 ✅ add prop"]
+    C --> COPY["const copy = { ...obj1 } ✅ new object"]
+    C --> RE["obj1 = { x: 5 } ❌ TypeError: Assignment to constant"]
+    style M fill:#e8f5e9,stroke:#2e7d32
+    style ADD fill:#e8f5e9,stroke:#2e7d32
+    style COPY fill:#e8f5e9,stroke:#2e7d32
+    style RE fill:#ffebee,stroke:#c62828
+```
+
+```js
+// 133_Spead.js + 137_Let_const_obj.js
+const obj1 = { a: 1, b: 2 };
+const copy = { ...obj1 };        // shallow copy — independent object
+console.log(copy);               // { a: 1, b: 2 }
+
+const config = { browser: "Chrome", timeout: 3000 };
+config.browser = "Firefox";      // ✅ mutate property — allowed
+config.retries = 2;              // ✅ add property — allowed
+console.log(config);             // { browser: 'Firefox', timeout: 3000, retries: 2 }
+// config = { browser: "Safari" };  // ❌ TypeError: Assignment to constant variable
+
+// let needed ONLY when reassigning the binding to a new object:
+let active = { browser: "Chrome" };
+active = { browser: "Safari" };  // points to a different object
+```
+
+| Action on `const obj` | Allowed? |
+|:----------------------|:--------:|
+| `obj.x = 1` (mutate) | ✅ |
+| `obj.y = 2` (add) | ✅ |
+| `delete obj.z` (remove) | ✅ |
+| `obj = { … }` (reassign) | ❌ TypeError |
+| `Object.freeze(obj)` then `obj.x = 1` | ⚠️ ignored (throws in strict mode) |
+
+> 📎 Full interview write-up of this in [`interview.md`](./interview.md#objects).
+
+---
+
+### 134 — Getters, Setters & `this`
+
+**Concept:** A `get` accessor runs like a property read (`user.fullName`, no parentheses) and a `set` accessor runs on assignment (`user.fullName = "…"`). Inside both, `this` refers to the object the accessor lives on.
+
+**Why:** Getters/setters compute derived values (full name from first + last) and validate or split values on write — a stepping stone to classes and Page Object Model properties in Playwright.
+
+**Q&A — why use this?**
+- **Q: Why no `()` when calling a getter?** A: A getter *is* a property — you read it like data (`user.fullName`), and the function runs behind the scenes. That's the point: a computed value that looks like a field.
+- **Q: What does `this` point to?** A: The object the method/accessor is called on. `this.firstName` reads the current object's `firstName`. Arrow functions don't bind their own `this` — avoid them for object methods.
+- **Q: When prefer get/set over a plain method?** A: When it reads naturally as a property (`order.total`, `user.fullName`). Use a method (`calc.add(n)`) when it's clearly an action with arguments.
+
+```mermaid
+flowchart LR
+    R["read user.fullName"] --> G["get fullName() returns this.first + this.last"]
+    W["user.fullName = 'Amit Sharma'"] --> S["set fullName(v) splits v into first + last"]
+    style G fill:#e8f5e9,stroke:#2e7d32
+    style S fill:#fff3e0,stroke:#e65100
+```
+
+```js
+// 134_Objects_GET_SET_Methods.js
+const user = {
+    firstName: "Pramod",
+    lastName: "Dutta",
+    get fullName() {
+        return this.firstName + " " + this.lastName;
+    },
+    set fullName(value) {
+        [this.firstName, this.lastName] = value.split(" ");
+    }
+};
+
+console.log(user.fullName);      // "Pramod Dutta"  — getter, no ()
+user.fullName = "Amit Sharma";   // setter — splits into first/last
+console.log(user.firstName);     // "Amit"
+console.log(user.lastName);      // "Sharma"
+```
+
+---
+
+### 135 — Iterating Objects (`keys` / `values` / `entries`, `for...in`)
+
+**Concept:** Objects aren't directly iterable like arrays. `Object.keys(obj)`, `Object.values(obj)`, and `Object.entries(obj)` turn an object into arrays you can loop; `for...in` walks the keys directly.
+
+**Why:** You constantly need to walk a config, an API response, or test data — log every field, transform values, or assert each entry.
+
+**Q&A — why use this?**
+- **Q: `keys` vs `values` vs `entries`?** A: `keys` → `["a","b"]`; `values` → `[1,2]`; `entries` → `[["a",1],["b",2]]`. Use `entries` when you need both key and value in the loop.
+- **Q: `for...in` or `Object.keys().forEach`?** A: `Object.keys()` is safer — `for...in` also walks inherited enumerable keys. With `Object.keys()` you only get the object's own keys.
+- **Q: How do I loop key+value cleanly?** A: `Object.entries(obj).forEach(([k, v]) => …)` — array destructuring in the callback gives you both at once.
+
+```mermaid
+flowchart LR
+    O["obj = { a: 1, b: 2, c: 3 }"] --> K["Object.keys → &#91;'a','b','c'&#93;"]
+    O --> V["Object.values → &#91;1, 2, 3&#93;"]
+    O --> E["Object.entries → &#91;&#91;'a',1&#93;,&#91;'b',2&#93;,&#91;'c',3&#93;&#93;"]
+    style O fill:#e3f2fd,stroke:#01579b
+```
+
+```js
+// 135_IQ
+const obj = { a: 1, b: 2, c: 3 };
+console.log(Object.keys(obj));     // [ 'a', 'b', 'c' ]
+console.log(Object.values(obj));   // [ 1, 2, 3 ]
+console.log(Object.entries(obj));  // [ ['a',1], ['b',2], ['c',3] ]
+
+const user = { name: "John", age: 30 };
+for (const key in user) {
+    console.log(`${key}: ${user[key]}`);   // name: John / age: 30
+}
+```
+
+---
+
+## 📖 What's in Chapter 15 — 2D Arrays (Available Now)
+
+### Files
+
+| File | Topic | What you'll learn |
+|------|-------|-------------------|
+| `138_2D_Array.js` | Grid basics | Array-of-arrays literal, nested `for`, `grid[i][j]` access |
+| `139_2d.js` | Rows × columns | `1x4` shape, `grid.length` (rows) vs `grid[0].length` (cols) |
+| `140_REAL.js` | Test matrix | Walk a results matrix 3 ways — `for`, `for...of`, `forEach`; `write` vs `log` |
+| `141_2d_Array_Fn.js` | map + reduce | Per-row sums with `map`+`reduce`, find every failed test case |
+| `142_IQ_Right_Pattern_Py.js` | Pattern IQ | Right-triangle star pattern built with nested loops |
+| `testdata.csv` | Data file | Sample CSV (username, password, expected) — rows = records, cols = fields |
+
+### Concept
+
+A **2D array** is an array whose elements are themselves arrays — a **grid** of rows and columns. You reach a cell with two indexes: `grid[row][col]`. It's the natural shape for tables, matrices, and test-result sets.
+
+### Why
+
+Test data is naturally tabular — a results matrix (`[name, status, code]` per test), a CSV of login credentials, a score sheet. 2D arrays + nested loops let you store and walk that grid the same way you'd read a spreadsheet.
+
+**Q&A — why use this?**
+- **Q: How do I get the rows and columns count?** A: `grid.length` = number of rows; `grid[0].length` = columns in the first row. Rows can have **different** lengths (a jagged array), so check each row's own length.
+- **Q: Why two loops?** A: One index per dimension — the outer loop picks a **row**, the inner loop walks the **cells** in that row. `grid[i][j]` needs both `i` and `j`.
+- **Q: `for` vs `for...of` vs `forEach`?** A: Same result. `for` when you need the index (`i`/`j`); `for...of` / `forEach` when you only need the value. `forEach` can't `break` early — use `for...of` if you must stop.
+
+### Key Concepts
+
+```mermaid
+mindmap
+  root((Chapter 15 — 2D Arrays))
+    Shape
+      array of arrays
+      rows x cols
+      grid&#91;i&#93;&#91;j&#93;
+      jagged rows differ
+    Size
+      grid.length rows
+      grid&#91;0&#93;.length cols
+    Iterate
+      nested for i,j
+      for...of row then cell
+      forEach row then cell
+    Print
+      write same line
+      log&#40;&#41; ends row
+    Transform
+      map per row
+      reduce row sum
+      filter failed cases
+    Patterns
+      star triangle
+      nested loop counts
+```
+
+### Run them
+
+```bash
+node chapter_15_2D_Array/138_2D_Array.js              # → prints every cell of a 3x3 grid
+node chapter_15_2D_Array/139_2d.js                    # → grid[0][0], rows vs cols counts
+node chapter_15_2D_Array/140_REAL.js                  # → test matrix printed as a table
+node chapter_15_2D_Array/141_2d_Array_Fn.js           # → row sums [253,175,275] + failed cases
+node chapter_15_2D_Array/142_IQ_Right_Pattern_Py.js   # → right-triangle star pattern
+```
+
+---
+
+### 138 / 139 — Grid Basics & Shape
+
+**Concept:** A 2D array is `[[...], [...], [...]]` — each inner array is a row. `grid[i][j]` reads row `i`, column `j`. `grid.length` counts rows; `grid[0].length` counts columns in row 0.
+
+**Why:** Any tabular data — a 3×3 board, a score sheet, a results table — maps directly onto a grid, and the two-index access mirrors how you'd point at a spreadsheet cell.
+
+**Q&A — why use this?**
+- **Q: What is `grid[1][2]`?** A: Row index 1 (second row), column index 2 (third cell). Both indexes are zero-based.
+- **Q: How big is the grid?** A: `grid.length` rows; for a rectangular grid, `grid[0].length` cols. Total cells = rows × cols.
+- **Q: Are all rows the same length?** A: Not necessarily. A **jagged** array has rows of different lengths — always read each row's own `.length` inside the loop.
+
+```mermaid
+flowchart LR
+    G["grid = &#91;&#91;1,2,3&#93;,&#91;4,5,6&#93;,&#91;7,8,9&#93;&#93;"] --> R0["grid&#91;0&#93; → &#91;1,2,3&#93; (row)"]
+    R0 --> C["grid&#91;0&#93;&#91;2&#93; → 3 (cell)"]
+    G --> L1["grid.length → 3 rows"]
+    G --> L2["grid&#91;0&#93;.length → 3 cols"]
+    style G fill:#e3f2fd,stroke:#01579b
+```
+
+```js
+// 138 + 139 — combined
+let grid = [
+    [10, 20, 30],
+    [40, 50, 60],
+    [70, 80, 90]
+];
+
+console.log(grid[0][0]);       // 10  — row 0, col 0
+console.log(grid[0][2]);       // 30  — row 0, col 2
+console.log(grid.length);      // 3   — number of rows
+console.log(grid[0].length);   // 3   — columns in row 0
+```
+
+---
+
+### 140 — Walking a Test Matrix (`for` / `for...of` / `forEach`)
+
+**Concept:** Three ways to visit every cell of a grid, all using two loops: classic `for` (with `i`/`j`), `for...of` (value-by-value), and `forEach`. Printing a row on one line needs `process.stdout.write` (no newline) plus an empty `console.log()` to end the row.
+
+**Why:** A test-results matrix (`[name, status, code]` per row) is exactly this shape — you loop it to count executed tests, count passes, or pull the failing status codes.
+
+**Q&A — why use this?**
+- **Q: Why `process.stdout.write` instead of `console.log` for cells?** A: `write` prints with **no** newline, so cells stay on the same line. `console.log` always adds `\n`, which would put every cell on its own line.
+- **Q: What does the empty `console.log()` do?** A: Prints just a newline — it **ends the current row** so the next row starts below it.
+- **Q: Which loop should I pick?** A: `for` when you need indexes; `for...of`/`forEach` when you only need values. Need to stop early? `for...of` supports `break`; `forEach` does not.
+
+```mermaid
+flowchart TD
+    Start["testMatrix"] --> Outer["outer loop → pick a ROW"]
+    Outer --> Inner["inner loop → each CELL"]
+    Inner --> W["write(cell + ' ') → same line"]
+    Inner -->|row done| NL["console.log() → newline"]
+    NL --> Outer
+    style W fill:#e8f5e9,stroke:#2e7d32
+    style NL fill:#fff3e0,stroke:#e65100
+```
+
+```js
+// 140_REAL.js
+let testMatrix = [
+    ["login",    "pass", 200],
+    ["checkout", "fail", 404],
+    ["search",   "pass", 180]
+];
+
+testMatrix.forEach(row => {
+    row.forEach(cell => process.stdout.write(cell + " ")); // cells on one line
+    console.log();                                          // end the row
+});
+// login pass 200
+// checkout fail 404
+// search pass 180
+```
+
+---
+
+### 141 — Transforming Grids (`map` + `reduce`, filtering failures)
+
+**Concept:** Array methods compose on grids: `grid.map(row => row.reduce(...))` collapses each row to a single value (e.g. a sum); nested loops with an `if` pull out only the cells you care about.
+
+**Why:** Real analysis on tabular data — total each student's scores, sum each test suite's timings, or list every test case that contains `"fail"` — is just map/reduce/filter applied row by row.
+
+**Q&A — why use this?**
+- **Q: How do I sum each row?** A: `scores.map(row => row.reduce((a, b) => a + b, 0))` — `map` runs once per row, `reduce` adds that row's cells into one number. Result is a 1D array of sums.
+- **Q: Why the `0` in `reduce(..., 0)`?** A: It's the **initial accumulator**. Without it, `reduce` uses the first element as the seed — which breaks on an empty row. Always seed numeric reduces with `0`.
+- **Q: How do I find failing tests?** A: Nested loop, and `if (cell.includes("fail"))` keep it. Works because each cell is a string like `"filter-fail"`.
+
+```mermaid
+flowchart LR
+    S["scores = &#91;&#91;85,90,78&#93;,&#91;60,45,70&#93;,&#91;95,88,92&#93;&#93;"] --> M["map per row"]
+    M --> R["reduce each row → sum"]
+    R --> O["&#91;253, 175, 275&#93;"]
+    style S fill:#e3f2fd,stroke:#01579b
+    style O fill:#e8f5e9,stroke:#2e7d32
+```
+
+```js
+// 141_2d_Array_Fn.js
+let scores = [
+    [85, 90, 78],   // 253
+    [60, 45, 70],   // 175
+    [95, 88, 92]    // 275
+];
+let rowSums = scores.map(row => row.reduce((a, b) => a + b, 0));
+console.log(rowSums);            // [ 253, 175, 275 ]
+
+let suiteResults = [
+    ["login-pass", "register-pass", "logout-pass"],
+    ["search-pass", "filter-fail",  "sort-pass"],
+    ["checkout-fail", "payment-fail", "confirm-pass"]
+];
+for (let i = 0; i < suiteResults.length; i++) {
+    for (let j = 0; j < suiteResults[i].length; j++) {
+        if (suiteResults[i][j].includes("fail")) {
+            console.log(suiteResults[i][j]); // filter-fail / checkout-fail / payment-fail
+        }
+    }
+}
+```
+
+---
+
+### 142 — Pattern IQ: Right-Triangle Stars (nested loops)
+
+**Concept:** A classic interview warm-up — the **outer** loop controls how many rows, the **inner** loop prints that many stars on the current row. Row `i` gets `i` stars.
+
+**Why:** Star patterns are the simplest way to *feel* how nested loops drive a 2D shape — the inner loop count depends on the outer loop's current value, which is the core idea behind every grid algorithm.
+
+**Q&A — why use this?**
+- **Q: Why does row `i` print `i` stars?** A: The inner loop runs `j` from `1` to `i`, so its count grows by one each outer pass — 1 star, then 2, then 3…
+- **Q: Build the row string or print each star?** A: Build a `row` string in the inner loop, then `console.log(row)` once per row — fewer prints, and the whole row lands on one line.
+- **Q: How is this different from a square grid?** A: The inner bound is `i` (variable), not a fixed `n` — that's what makes it a *triangle* instead of a full rectangle.
+
+```mermaid
+flowchart TD
+    O["outer i = 1..n (rows)"] --> I["inner j = 1..i (stars)"]
+    I --> B["row += '*'"]
+    B -->|inner done| P["console.log(row)"]
+    P --> O
+    style B fill:#e8f5e9,stroke:#2e7d32
+```
+
+```js
+// 142_IQ_Right_Pattern_Py.js
+let n = 5;
+for (let i = 1; i <= n; i++) {
+    let row = "";
+    for (let j = 1; j <= i; j++) {
+        row += "*";
+    }
+    console.log(row);
+}
+// *
+// **
+// ***
+// ****
+// *****
+```
+
+---
+
 ## 🔭 What's Coming Next
 
 ```mermaid
 graph TD
-    subgraph next["Next Up — Objects, 2D Arrays"]
-        N1[Ch 12: Functions ✅] --> N2[Ch 13: Strings ✅]
-        N2 --> N3[Ch 14: Objects]
-        N3 --> N4[Ch 15: 2D Arrays]
+    subgraph next["Next Up — Callbacks, Promises"]
+        N1[Ch 14: Objects ✅] --> N2[Ch 15: 2D Arrays ✅]
+        N2 --> N3[Ch 16: Callbacks]
+        N3 --> N4[Ch 17: Promises]
     end
 
     style next fill:#fff3e0,stroke:#e65100
@@ -3087,6 +3694,8 @@ graph TD
 - ✅ Chapter 12 — **Functions (Part 1)**: define + call, four function types, parameter vs argument, template-literal returns, function expression, arrow functions (files `96`–`103`)
 - ✅ Chapter 12 — **Functions (Part 2)**: all-three forms side-by-side, IIFE, default/rest/spread params, scope, closures, higher-order functions, pure functions (files `104`–`117`)
 - ✅ Chapter 13 — **Strings**: quotes/template literals, properties & indexing, search/check, slice vs substring, transform (case/trim/replace/split), conversion + a full method cheat sheet (files `118`–`123`)
+- ✅ Chapter 14 — **Objects**: literals & access, primitive vs reference, destructuring, spread copy, `let` vs `const` for objects, get/set + `this`, `keys`/`values`/`entries` (files `124`–`137`)
+- ✅ Chapter 15 — **2D Arrays**: grids & shape (rows × cols), nested-loop traversal (`for`/`for...of`/`forEach`), `write` vs `log` table printing, `map`+`reduce` row sums, failed-case filtering, star-pattern IQ (files `138`–`142`)
 - ✅ **Per-chapter README** — every chapter folder now has its own deep-dive README.md
 
 ---
