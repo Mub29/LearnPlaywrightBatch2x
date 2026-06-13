@@ -56,6 +56,7 @@ graph TB
             ch13_str["Ch 13: Strings ✅"]
             ch14_obj["Ch 14: Objects ✅"]
             ch15_2d["Ch 15: 2D Arrays ✅"]
+            ch16_cb["Ch 16: Callbacks ✅"]
         end
 
         subgraph adv["⚙️ Advanced JS (Weeks 7–8)"]
@@ -280,6 +281,19 @@ LearnPlaywrightBatch2x/
 │   ├── 141_2d_Array_Fn.js              # map + reduce row sums, find failed test cases
 │   ├── 142_IQ_Right_Pattern_Py.js      # IQ — right-triangle star pattern with nested loops
 │   └── testdata.csv                    # Sample CSV — username, password, expected_Result
+│
+├── chapter_16_Callback/                ✅ Callbacks — pass-a-function, sync vs async, callback hell
+│   ├── 143_Callback.js                 # Callback basics — named, anonymous, arrow forms
+│   ├── 144_CB.js                       # test('title', () => {}) — the callback you already use
+│   ├── 145_CB_Fn.js                    # cafe(item, callWhenReady) — three ways to pass a callback
+│   ├── 146_PW_CB.js                    # Mini Playwright test() — testName + callback pattern
+│   ├── 147_JS_CB.js                    # setTimeout — why Test 3 prints before Test 2
+│   ├── 148_Sync_CB.js                  # Synchronous callback — forEach runs in order, now
+│   ├── 149_Async_CB.js                 # Asynchronous callback — setTimeout defers to later
+│   ├── 150_CB_Hell.js                  # Callback hell — 4-step login nested pyramid
+│   ├── 151_CB_Hell_20_Steps.js         # Pyramid of Doom — 24-step E2E checkout, drifting right
+│   ├── 152_CB_Parameter.js             # Callback with parameters — callback(name, status)
+│   └── 153_CB_Return.js                # Callback as return driver — calculate(a,b,operation)
 │
 └── README.md                           👋 You are here
 ```
@@ -3667,14 +3681,140 @@ for (let i = 1; i <= n; i++) {
 
 ---
 
+## 📖 What's in Chapter 16 — Callbacks (Available Now)
+
+### Files
+
+| File | Topic | What you'll learn |
+|------|-------|-------------------|
+| `143_Callback.js` | Callback basics | Pass a function into another function — named, anonymous, and arrow forms |
+| `144_CB.js` | The callback you already use | `test('title', () => {})` — the second arg *is* a callback |
+| `145_CB_Fn.js` | Three ways to pass | Same `cafe(item, callback)` called with a named fn, an anonymous fn, an arrow fn |
+| `146_PW_CB.js` | Playwright shape | A mini `test(testName, callback)` — exactly how Playwright's `test()` is built |
+| `147_JS_CB.js` | Why order surprises you | `setTimeout` — Test 3 prints **before** Test 2; the event loop defers |
+| `148_Sync_CB.js` | Synchronous callback | `forEach` runs the callback **now**, item-by-item, in order |
+| `149_Async_CB.js` | Asynchronous callback | `setTimeout` runs the callback **later**, after the stack clears |
+| `150_CB_Hell.js` | Callback hell | 4-step login nested inside each other's callbacks — the pyramid begins |
+| `151_CB_Hell_20_Steps.js` | Pyramid of Doom | 24-step E2E checkout — code drifts further right with every nested step |
+| `152_CB_Parameter.js` | Callbacks with args | The caller passes data **into** the callback — `callback(name, status)` |
+| `153_CB_Return.js` | Callback drives the result | `calculate(a, b, operation)` — the callback decides what gets returned |
+
+### Concept
+
+A **callback** is a function you pass as an argument to another function, to be called back later — either immediately (synchronous, like `forEach`) or after some work finishes (asynchronous, like `setTimeout` or a network response).
+
+### Why
+
+Every test framework runs on callbacks — `test('name', async () => {...})` hands your test body to the runner as a callback. Understanding sync vs async callbacks (and how they nest into "callback hell") is the foundation for Promises and `async/await` coming next.
+
+**Q&A — why use this?**
+- **Q: Why does `Test 3` print before `Test 2` in `147_JS_CB.js`?** A: `setTimeout` is asynchronous — its callback is parked until the call stack is empty, so the synchronous `console.log("Test 3")` runs first even with a `0ms` delay.
+- **Q: Sync or async callback — how do I tell?** A: `forEach`/`map` invoke the callback **immediately** and finish before the next line. `setTimeout`/network/file callbacks fire **later**, after the surrounding code completes.
+- **Q: What's "callback hell"?** A: When each async step must wait for the previous one, you nest callbacks inside callbacks — the code marches right into a "pyramid of doom" (`151`). Promises and `async/await` flatten it.
+
+### Key Concepts
+
+```mermaid
+mindmap
+  root((Chapter 16 — Callbacks))
+    What
+      function passed as argument
+      called back later
+      named / anonymous / arrow
+    Where you see it
+      test&#40;name, callback&#41;
+      forEach&#40;callback&#41;
+      setTimeout&#40;callback, ms&#41;
+    Sync
+      runs now
+      forEach in order
+      finishes before next line
+    Async
+      runs later
+      setTimeout defers
+      event loop parks it
+    Callback hell
+      nest step in step
+      pyramid of doom
+      drifts right
+    With parameters
+      callback&#40;name, status&#41;
+      caller passes data in
+    Returns
+      operation&#40;a, b&#41;
+      callback decides result
+    Next
+      Promises
+      async / await
+```
+
+### Run them
+
+```bash
+node chapter_16_Callback/143_Callback.js            # → order placed, then each callback fires
+node chapter_16_Callback/147_JS_CB.js               # → Test 1, Test 3, then Test 2 (2s later)
+node chapter_16_Callback/148_Sync_CB.js             # → Test 0..3 printed in order, synchronously
+node chapter_16_Callback/149_Async_CB.js            # → Test 1, Test 3, then Test 2 deferred
+node chapter_16_Callback/150_CB_Hell.js             # → Steps 1-4 then "Test Complete!"
+node chapter_16_Callback/152_CB_Parameter.js        # → "Welcome, Dev" then "Let's start testing!"
+node chapter_16_Callback/153_CB_Return.js           # → 15, then step1..4 then "Done!"
+```
+
+---
+
+### 147 — Sync vs Async: why order surprises you
+
+**Concept:** A synchronous callback runs **immediately** and finishes before the next line. An asynchronous callback (like `setTimeout`'s) is handed to the event loop and runs **later**, after all the synchronous code has finished — even when the delay is `0`.
+
+**Why:** This single idea explains every "why did my assertion run before the page loaded?" bug. Tests are full of async work (navigation, network, animations); knowing what defers and what doesn't is the difference between a stable suite and flake.
+
+**Q&A — why use this?**
+- **Q: Does a bigger `setTimeout` delay change the order?** A: No — even `setTimeout(fn, 0)` runs *after* the synchronous lines. The delay is a minimum wait, not a priority.
+- **Q: What actually defers the callback?** A: The event loop. Async callbacks wait in a queue until the call stack is empty, then run one at a time.
+- **Q: How does this connect to Playwright?** A: `await page.click()` is the modern fix — it pauses until the async work resolves, so your next line truly runs *after* it. Callbacks were the old way to express the same "do this when done".
+
+```mermaid
+sequenceDiagram
+    participant S as Call Stack (sync)
+    participant Q as Callback Queue (async)
+    S->>S: console.log("Test 1: started")
+    S->>Q: setTimeout(cb, 2000) — park cb
+    S->>S: console.log("Test 3: next test")
+    Note over S: stack empties
+    Q-->>S: 2s later → run cb
+    S->>S: console.log("Test 2: API response")
+```
+
+```js
+console.log("Test 1: started");
+
+setTimeout(function () {
+    console.log("Test 2: API response received");
+}, 2000);
+
+console.log("Test 3: moving to next test");
+
+// Output order:
+// Test 1: started
+// Test 3: moving to next test
+// Test 2: API response received   ← async, runs last
+```
+
+| Callback kind | Runs | Example | Blocks next line? |
+|---------------|------|---------|-------------------|
+| Synchronous | now, in order | `forEach`, `map` | ✅ yes |
+| Asynchronous | later, via event loop | `setTimeout`, network | ❌ no |
+
+---
+
 ## 🔭 What's Coming Next
 
 ```mermaid
 graph TD
-    subgraph next["Next Up — Callbacks, Promises"]
-        N1[Ch 14: Objects ✅] --> N2[Ch 15: 2D Arrays ✅]
-        N2 --> N3[Ch 16: Callbacks]
-        N3 --> N4[Ch 17: Promises]
+    subgraph next["Next Up — Promises, Async / Await"]
+        N1[Ch 15: 2D Arrays ✅] --> N2[Ch 16: Callbacks ✅]
+        N2 --> N3[Ch 17: Promises]
+        N3 --> N4[Ch 18: Async / Await]
     end
 
     style next fill:#fff3e0,stroke:#e65100
@@ -3696,6 +3836,7 @@ graph TD
 - ✅ Chapter 13 — **Strings**: quotes/template literals, properties & indexing, search/check, slice vs substring, transform (case/trim/replace/split), conversion + a full method cheat sheet (files `118`–`123`)
 - ✅ Chapter 14 — **Objects**: literals & access, primitive vs reference, destructuring, spread copy, `let` vs `const` for objects, get/set + `this`, `keys`/`values`/`entries` (files `124`–`137`)
 - ✅ Chapter 15 — **2D Arrays**: grids & shape (rows × cols), nested-loop traversal (`for`/`for...of`/`forEach`), `write` vs `log` table printing, `map`+`reduce` row sums, failed-case filtering, star-pattern IQ (files `138`–`142`)
+- ✅ Chapter 16 — **Callbacks**: pass-a-function (named/anon/arrow), the `test()` callback shape, sync vs async (`forEach` vs `setTimeout`), event-loop ordering, callback hell / 24-step pyramid of doom, callbacks with parameters & return-driving (files `143`–`153`)
 - ✅ **Per-chapter README** — every chapter folder now has its own deep-dive README.md
 
 ---
